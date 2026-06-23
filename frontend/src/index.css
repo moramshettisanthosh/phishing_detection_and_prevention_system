@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-slate-950: #020617;
+  --color-slate-900: #0b1121;
+  --color-slate-850: #131b2e;
+  --color-slate-800: #1e293b;
+  --color-slate-700: #334155;
+  --color-slate-500: #64748b;
+  --color-slate-400: #94a3b8;
+  --color-slate-300: #cbd5e1;
+  --color-slate-200: #e2e8f0;
+  --color-slate-150: #f1f5f9;
+  
+  --color-cyan-400: #38bdf8;
+  --color-cyan-500: #0ea5e9;
+  --color-cyan-600: #0284c7;
+  --color-cyan-650: #0369a1;
+  
+  --color-indigo-400: #38bdf8;
+  --color-indigo-550: #0ea5e9;
+  --color-indigo-600: #0ea5e9;
+  --color-indigo-650: #0284c7;
+  --color-indigo-950: #0b1121;
+
+  --color-red-400: #f43f5e;
+  --color-red-500: #e11d48;
+  --color-red-800: #be123c;
+  --color-red-905: #9f1239;
+  --color-red-950: #4c0519;
+}
+
+/* Customized scrollbar design for dashboards */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 99px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}

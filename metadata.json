@@ -1,0 +1,6 @@
+{
+  "name": "Phishing Detection and Prevention System",
+  "description": "Real-time AI/ML-based phishing detection and prevention platform analyzing URLs, emails, QR codes, and screenshots with explainable threat indicators, user reports, and UML documentation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

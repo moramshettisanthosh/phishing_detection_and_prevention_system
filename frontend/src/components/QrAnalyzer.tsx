@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import jsQR from 'jsqr';
 import { QrCode, Shield, RefreshCw, AlertTriangle, CheckCircle, HelpCircle, ArrowRight } from 'lucide-react';
 import { URLScanResult } from '../types';
 
@@ -7,6 +7,40 @@ interface QrAnalyzerProps {
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
 }
+
+// Helper function to decode QR code using jsQR
+const decodeQRFromBase64 = (base64Str: string): Promise<string | null> => {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.src = base64Str;
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = image.width;
+      canvas.height = image.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+      ctx.drawImage(image, 0, 0);
+      try {
+        const imageData = ctx.getImageData(0, 0, image.width, image.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        if (code) {
+          resolve(code.data);
+        } else {
+          resolve(null);
+        }
+      } catch (e) {
+        console.error('Error reading image data for QR:', e);
+        resolve(null);
+      }
+    };
+    image.onerror = () => {
+      resolve(null);
+    };
+  });
+};
 
 export default function QrAnalyzer({ onScanResult, isLoading, setIsLoading }: QrAnalyzerProps) {
   const [imageBase64, setImageBase64] = useState<string | null>(null);
@@ -32,7 +66,11 @@ export default function QrAnalyzer({ onScanResult, isLoading, setIsLoading }: Qr
       const response = await fetch('/api/scan-qr', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: `data:image/png;base64,${mockQRBase64}`, testUrl: targetUrl })
+        body: JSON.stringify({ 
+          imageBase64: `data:image/png;base64,${mockQRBase64}`, 
+          testUrl: targetUrl,
+          decodedUrl: targetUrl 
+        })
       });
 
       if (!response.ok) {
@@ -47,7 +85,6 @@ export default function QrAnalyzer({ onScanResult, isLoading, setIsLoading }: Qr
       }
     } catch (e) {
       console.error(e);
-      // fallback
       setExtractedUrl('http://quishing-vulnerability-proof-concept-test.it/signin');
     } finally {
       setIsLoading(false);
@@ -68,10 +105,16 @@ export default function QrAnalyzer({ onScanResult, isLoading, setIsLoading }: Qr
       setImageBase64(base64Str);
 
       try {
+        // Mathematically decode the QR code in the frontend first
+        const decodedUrl = await decodeQRFromBase64(base64Str);
+
         const response = await fetch('/api/scan-qr', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageBase64: base64Str })
+          body: JSON.stringify({ 
+            imageBase64: base64Str,
+            decodedUrl: decodedUrl || undefined
+          })
         });
 
         if (!response.ok) {

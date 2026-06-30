@@ -614,19 +614,19 @@ Be highly detailed, in-depth, styled with clear headers.`;
 
 // Scan QR Code endpoint
 app.post(['/api/scan-qr', '/scan-qr'], async (req, res) => {
-  const { imageBase64, username } = req.body;
+  const { imageBase64, decodedUrl, username } = req.body;
   if (!imageBase64) {
     return res.status(400).json({ success: false, error: 'Image payload is required.' });
   }
 
   try {
-    // Since Gemini is multimodal, let's pass the base64 image directly and write a prompt
-    // that asks visual OCR decoders to solve the QR code + extract its URL!
-    // This is incredibly robust, smart, and utilizes real-time AI to process files dynamically!
-    let extractedUrl = "";
+    // If the frontend mathematically decoded the QR code, use it directly.
+    // Otherwise, fall back to Gemini Vision AI.
+    let extractedUrl = decodedUrl || "";
     
-    try {
-      const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, "");
+    if (!extractedUrl) {
+      try {
+        const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, "");
       
       const imagePart = {
         inlineData: {

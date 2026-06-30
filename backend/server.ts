@@ -11,8 +11,21 @@ const app = express();
 const PORT = 3000;
 
 // Increase request size limit for screenshot/QR image uploads
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+// Vercel-compatible body parser middleware
+app.use((req, res, next) => {
+  if (req.body && typeof req.body === 'object') {
+    next();
+  } else {
+    express.json({ limit: '10mb' })(req, res, next);
+  }
+});
+app.use((req, res, next) => {
+  if (req.body && typeof req.body === 'object') {
+    next();
+  } else {
+    express.urlencoded({ limit: '10mb', extended: true })(req, res, next);
+  }
+});
 
 // Shared Database Storage (Simulated MongoDB Collections in-memory)
 interface DB {
@@ -255,7 +268,7 @@ const standardModelMetrics = {
 // ==========================================
 
 // Auth APIs
-app.post('/api/register', (req, res) => {
+app.post(['/api/register', '/register'], (req, res) => {
   const { username, password, role } = req.body;
   if (!username || !password) {
     return res.status(400).json({ success: false, error: 'Username and password are required.' });
@@ -286,7 +299,7 @@ app.post('/api/register', (req, res) => {
   res.json({ success: true, user: { id: newUser.id, username, role: newUser.role } });
 });
 
-app.post('/api/login', (req, res) => {
+app.post(['/api/login', '/login'], (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).json({ success: false, error: 'Username and password are required.' });
@@ -318,7 +331,7 @@ app.post('/api/login', (req, res) => {
 });
 
 // Predict URL API endpoint
-app.post('/api/predict-url', async (req, res) => {
+app.post(['/api/predict-url', '/predict-url'], async (req, res) => {
   const { url, username } = req.body;
   if (!url) {
     return res.status(400).json({ success: false, error: 'URL parameter is required.' });
@@ -475,7 +488,7 @@ Be concise, technical, professional, and clear! Avoid generic text.`;
 });
 
 // Analyze Email Phishing endpoint
-app.post('/api/analyze-email', async (req, res) => {
+app.post(['/api/analyze-email', '/analyze-email'], async (req, res) => {
   const { sender, subject, body, username } = req.body;
   if (!body) {
     return res.status(400).json({ success: false, error: 'Email content is required.' });
@@ -600,7 +613,7 @@ Be highly detailed, in-depth, styled with clear headers.`;
 });
 
 // Scan QR Code endpoint
-app.post('/api/scan-qr', async (req, res) => {
+app.post(['/api/scan-qr', '/scan-qr'], async (req, res) => {
   const { imageBase64, username } = req.body;
   if (!imageBase64) {
     return res.status(400).json({ success: false, error: 'Image payload is required.' });
@@ -732,7 +745,7 @@ If it is completely impossible to decode, output exactly: "INVALID_QR_CODE" foll
 });
 
 // Analyze Screenshot endpoint (Brand Spoofing & Visual OCR Phishing Analyzer)
-app.post('/api/analyze-screenshot', async (req, res) => {
+app.post(['/api/analyze-screenshot', '/analyze-screenshot'], async (req, res) => {
   const { imageBase64, username } = req.body;
   if (!imageBase64) {
     return res.status(400).json({ success: false, error: 'Screenshot payload is required.' });
@@ -834,7 +847,7 @@ Only output the JSON object. Do not include markdown codeblocks or extra convers
 });
 
 // AI Chatbot Cyber Advisor endpoint
-app.post('/api/chat', async (req, res) => {
+app.post(['/api/chat', '/chat'], async (req, res) => {
   const { messages } = req.body;
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ success: false, error: 'Messages array is required.' });
@@ -892,7 +905,7 @@ How else can I assist your minor project design today?`;
 });
 
 // Get Dashboard Statistics APIs
-app.get('/api/dashboard-stats', (req, res) => {
+app.get(['/api/dashboard-stats', '/dashboard-stats'], (req, res) => {
   const list = db.ScannedURLs;
   const total = list.length;
   
@@ -918,7 +931,7 @@ app.get('/api/dashboard-stats', (req, res) => {
   });
 });
 
-app.get('/api/threat-history', (req, res) => {
+app.get(['/api/threat-history', '/threat-history'], (req, res) => {
   res.json(db.ThreatLogs);
 });
 

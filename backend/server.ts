@@ -664,6 +664,7 @@ If it is completely impossible to decode, output exactly: "INVALID_QR_CODE" foll
       // Fallback fallback URL in developer environment
       extractedUrl = "http://login-verify-account-security-alert.391a.cc/auth/update";
     }
+  }
 
     // Classify the extracted URL using the internal predictor logic
     const features = extractURLFeatures(extractedUrl);

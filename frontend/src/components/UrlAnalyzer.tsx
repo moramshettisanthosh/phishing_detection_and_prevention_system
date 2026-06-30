@@ -52,7 +52,7 @@ export default function UrlAnalyzer({ onScanResult, isLoading, setIsLoading, def
           { name: 'URL Length', value: url.length, description: 'Lexical checks length.', status: url.length > 55 ? 'danger' : 'safe' },
           { name: 'Presence of HTTPS', value: url.startsWith('https') ? 'Yes' : 'No', description: 'SSL validation check', status: url.startsWith('https') ? 'safe' : 'danger' }
         ],
-        aiReport: "Unable to retrieve generative AI analysis. Please configure process.env.GEMINI_API_KEY in the environment.",
+        aiReport: "Unable to connect to the backend security server. Please ensure that the Express backend is running (by running 'npm run dev' in the terminal) and that you are accessing the application. If the server is running, check your network tab or console for details.",
         modelComparison: {
           'Random Forest': { accuracy: 98.42, precision: 98.15, recall: 98.7, f1: 98.42, confusionMatrix: [[4912, 92], [65, 4931]], rocCurve: [{ fpr: 0, tpr: 0 }, { fpr: 0.05, tpr: 0.94 }, { fpr: 1, tpr: 1 }] },
           'XGBoost': { accuracy: 98.91, precision: 98.65, recall: 99.1, f1: 98.87, confusionMatrix: [[4940, 64], [45, 4951]], rocCurve: [{ fpr: 0, tpr: 0 }, { fpr: 0.02, tpr: 0.98 }, { fpr: 1, tpr: 1 }] },

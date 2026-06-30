@@ -686,7 +686,13 @@ If it is completely impossible to decode, output exactly: "INVALID_QR_CODE" foll
           { name: 'Extracted URL Payload', value: extractedUrl, description: 'QR scanner solved value.', status: classification === 'safe' ? 'safe' : 'danger' },
           { name: 'Keywords Presence', value: features.suspiciousKeywordsCount, description: 'Triggers matched suspicious vocabularies.', status: features.suspiciousKeywordsCount ? 'danger' : 'safe' }
         ],
-        aiReport: `### QR-Code Malicious URL Report
+        aiReport: classification === 'safe'
+          ? `### QR-Code Safety Evaluation Report
+- **Origin**: Digital QR Code Image Scan Input
+- **Decoded Resource**: ${extractedUrl}
+- **Scan Evaluation**: The decoded resource appears to be a legitimate protocol link (such as a standard UPI payment link or trusted domain). No phishing indicators or brand spoofing signatures were detected.
+- **Defense Advice**: This QR code is verified as safe to use. You may proceed with caution.`
+          : `### QR-Code Malicious URL Report
 - **Origin**: Digital QR Code Image Scan Input
 - **Decoded Resource**: ${extractedUrl}
 - **Scan Evaluation**: Highly questionable URL structure mimicking login panels. Social engineering attackers widely use "Quishing" (QR Phishing) because target endpoints bypass default enterprise firewalls.

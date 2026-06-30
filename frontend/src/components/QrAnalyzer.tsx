@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import jsQR from 'jsqr';
 import { QrCode, Shield, RefreshCw, AlertTriangle, CheckCircle, HelpCircle, ArrowRight } from 'lucide-react';
 import { URLScanResult } from '../types';

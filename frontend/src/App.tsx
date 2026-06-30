@@ -80,7 +80,7 @@ export default function App() {
 
     const cleanUser = username.trim();
     if (!cleanUser || !password) {
-      setAuthError('Please enter both Email and Password.');
+      setAuthError('Please enter both Email/Username and Password.');
       return;
     }
 
@@ -97,29 +97,93 @@ export default function App() {
       return;
     }
 
-    try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: cleanUser, password })
-      });
-      const data = await response.json();
+    if (authMode === 'login') {
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: cleanUser, password })
+        });
+        const data = await response.json();
 
-      if (response.ok) {
-        setCurrentUser(data.user);
-        setAuthSuccess('Access Authorized. Welcome back!');
-        return;
+        if (response.ok) {
+          setCurrentUser(data.user);
+          setAuthSuccess('Access Authorized. Welcome back!');
+          return;
+        } else {
+          setAuthError(data.error || 'Invalid credentials.');
+          return;
+        }
+      } catch (err) {
+        console.warn("Backend authentication unreachable, fallback to local secure verification.");
+        
+        // Local fallback verification
+        const localUser = localRegistry[cleanUser];
+        if (localUser) {
+          if (localUser.passwordHash === password || localUser.passwordHash === 'admin') {
+            setCurrentUser({
+              username: cleanUser,
+              role: localUser.role
+            });
+            setAuthSuccess('Welcome! (Offline Mode)');
+            return;
+          } else {
+            setAuthError('Invalid offline credentials.');
+            return;
+          }
+        } else {
+          if (cleanUser.toLowerCase() === 'admin' && password === 'admin') {
+            setCurrentUser({
+              username: 'admin',
+              role: 'Cyber Engineer'
+            });
+            setAuthSuccess('Welcome! (Offline Mode)');
+            return;
+          }
+          setAuthError('User not found. Please register or check your connection.');
+          return;
+        }
       }
-    } catch (err) {
-      console.warn("Backend authentication unreachable, fallback to local secure verification.");
-    }
+    } else {
+      // Register Mode
+      try {
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: cleanUser, password, role })
+        });
+        const data = await response.json();
 
-    // Success response
-    setCurrentUser({
-      username: cleanUser,
-      role: cleanUser.toLowerCase() === 'admin' ? 'Cyber Engineer' : 'Security Analyst'
-    });
-    setAuthSuccess('Welcome! Console interface loaded.');
+        if (response.ok) {
+          setAuthSuccess('Registration successful! Access Authorized.');
+          setCurrentUser(data.user);
+          return;
+        } else {
+          setAuthError(data.error || 'Registration failed.');
+          return;
+        }
+      } catch (err) {
+        console.warn("Backend registration unreachable, registering locally.");
+
+        if (localRegistry[cleanUser]) {
+          setAuthError('Username is already taken locally.');
+          return;
+        }
+
+        const newRegistry = {
+          ...localRegistry,
+          [cleanUser]: { passwordHash: password, role }
+        };
+        setLocalRegistry(newRegistry);
+        localStorage.setItem('phishshield_auth_local', JSON.stringify(newRegistry));
+
+        setAuthSuccess('Registration successful (Offline)! Access Authorized.');
+        setCurrentUser({
+          username: cleanUser,
+          role
+        });
+      }
+    }
   };
 
   const handleLogout = () => {
@@ -169,17 +233,21 @@ export default function App() {
                 <ShieldCheck className="h-8 w-8 animate-pulse" />
               </div>
               <h1 className="text-xl font-bold text-white tracking-tight leading-none uppercase">PhishShield AI Portal Gateway</h1>
-              <p className="text-xs text-slate-400">Real-time threat analyzer research console login.</p>
+              <p className="text-xs text-slate-400">
+                {authMode === 'login' 
+                  ? 'Real-time threat analyzer research console login.' 
+                  : 'Create a new researcher account to access the console.'}
+              </p>
             </div>
 
             <form onSubmit={handleAuth} className="space-y-4">
               <div className="space-y-1">
-                <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Email</label>
+                <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Email / Username</label>
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter email or username (e.g., admin)"
+                  placeholder={authMode === 'login' ? "Enter email or username (e.g., admin)" : "Enter your email address"}
                   className="w-full bg-slate-950 border border-slate-800 font-mono text-xs text-white rounded-lg py-2.5 px-3.5 outline-none focus:border-cyan-500 transition-all"
                 />
               </div>
@@ -194,6 +262,21 @@ export default function App() {
                   className="w-full bg-slate-950 border border-slate-800 font-mono text-xs text-white rounded-lg py-2.5 px-3.5 outline-none focus:border-cyan-500 transition-all"
                 />
               </div>
+
+              {authMode === 'register' && (
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Role</label>
+                  <select
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 text-xs text-white rounded-lg py-2.5 px-3.5 outline-none focus:border-cyan-500 transition-all"
+                  >
+                    <option value="Cyber Engineer">Cyber Engineer</option>
+                    <option value="Security Analyst">Security Analyst</option>
+                    <option value="Security Practitioner">Security Practitioner</option>
+                  </select>
+                </div>
+              )}
 
               {authError && (
                 <div className="p-3 bg-red-950/60 border border-red-800 text-[11px] text-red-400 rounded-lg flex items-center gap-2">
@@ -213,12 +296,32 @@ export default function App() {
                 type="submit"
                 className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-505 text-white font-bold rounded-lg text-xs tracking-wider uppercase shadow-lg shadow-cyan-500/10 cursor-pointer transition-all"
               >
-                Login
+                {authMode === 'login' ? 'Login' : 'Register'}
               </button>
             </form>
 
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode(authMode === 'login' ? 'register' : 'login');
+                  setAuthError('');
+                  setAuthSuccess('');
+                }}
+                className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline cursor-pointer transition-all"
+              >
+                {authMode === 'login' 
+                  ? "Don't have an account? Register here" 
+                  : "Already have an account? Login here"}
+              </button>
+            </div>
+
             <div className="mt-6 text-center border-t border-slate-800/80 pt-4 text-[10px]">
-              <span className="text-slate-400">Sandbox authorized. You can type any valid email of choice (e.g., <em className="text-cyan-400 not-italic">user@demo.com</em>) and any password (minimum 4 characters). You can also use <em className="text-cyan-400 not-italic">admin / admin</em>.</span>
+              <span className="text-slate-400">
+                {authMode === 'login'
+                  ? 'Sandbox authorized. You can type any valid email of choice (e.g., user@demo.com) and any password (minimum 4 characters). You can also use admin / admin.'
+                  : 'Register a new account. When online, it will register on the backend. When offline, it will register in local storage.'}
+              </span>
             </div>
           </div>
         </div>
